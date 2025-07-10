@@ -305,18 +305,21 @@ IMPORTANT: Do NOT include URLs or citations in your answer. Just provide a clean
               // Flush any remaining markdown
               const remaining = markdownBuffer.flush();
               if (remaining) {
-                process.stdout.write(remaining);
+                // Remove trailing newlines from markdown output
+                process.stdout.write(remaining.trimEnd());
               }
-              console.log(); // Print newline at the end
               
               // Display citations if any were found
               if (citations.length > 0) {
-                console.log(chalk.gray('\n---\nSources:'));
+                console.log(chalk.gray('\n\n---\nSources:'));
                 citations.forEach((citation, index) => {
                   console.log(chalk.cyan(`[${index + 1}] ${citation.title}`));
                   console.log(chalk.gray(`    ${citation.url}`));
                 });
               }
+              
+              // Always end with a single newline
+              console.log();
               
               return;
             }
@@ -369,8 +372,6 @@ IMPORTANT: Do NOT include URLs or citations in your answer. Just provide a clean
     } finally {
       reader.cancel();
     }
-    
-    console.log(); // Print newline at the end
 
   } catch (error) {
     console.error(chalk.red('Error:'), error);
