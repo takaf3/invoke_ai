@@ -1,13 +1,84 @@
 #!/usr/bin/env tsx
 
+// Keywords that likely indicate a need for web search
+const WEB_SEARCH_KEYWORDS = [
+  'latest', 'recent', 'current', 'today', 'yesterday', 'news',
+  'update', 'price', 'stock', 'weather', 'score', 'result',
+  'released', 'announced', 'trending', 'happening', 'now',
+  'breaking', '2024', '2025', 'this week', 'this month',
+  'real-time', 'live', 'status', 'outage', 'down'
+];
+
+// Keywords that indicate informational queries that might benefit from web search
+const INFO_KEYWORDS = [
+  'what is', 'who is', 'where is', 'when is', 'how to',
+  'tell me about', 'explain', 'define', 'information about'
+];
+
+// Keywords that indicate no web search needed
+const NO_SEARCH_KEYWORDS = [
+  'hi', 'hello', 'hey', 'thanks', 'thank you', 'bye', 
+  'goodbye', 'please', 'help me write', 'code', 'implement',
+  'fix', 'debug', 'create', 'make', 'build'
+];
+
+function shouldUseWebSearch(command: string, forceSearch?: boolean, noSearch?: boolean): boolean {
+  // Explicit control via flags
+  if (forceSearch) return true;
+  if (noSearch) return false;
+  
+  const lowerCommand = command.toLowerCase();
+  
+  // Check for no-search keywords first
+  if (NO_SEARCH_KEYWORDS.some(keyword => lowerCommand.includes(keyword))) {
+    // Unless it also contains strong web search indicators
+    if (!WEB_SEARCH_KEYWORDS.some(keyword => lowerCommand.includes(keyword))) {
+      return false;
+    }
+  }
+  
+  // Check for web search keywords
+  if (WEB_SEARCH_KEYWORDS.some(keyword => lowerCommand.includes(keyword))) {
+    return true;
+  }
+  
+  // Check for informational queries with specific patterns
+  if (INFO_KEYWORDS.some(keyword => lowerCommand.startsWith(keyword))) {
+    // Only use web search if it seems to be asking about current events or people
+    return lowerCommand.match(/\b(company|person|event|place|product)\b/) !== null;
+  }
+  
+  return false;
+}
+
 async function main() {
   // Parse command line arguments
   const args = process.argv.slice(2);
-  if (args.length === 0) {
-    console.error('Usage: ai.ts <command>');
+  
+  // Check for flags
+  let forceSearch = false;
+  let noSearch = false;
+  let commandArgs = args;
+  
+  // Process flags
+  if (args.includes('--search') || args.includes('-s')) {
+    forceSearch = true;
+    commandArgs = args.filter(arg => arg !== '--search' && arg !== '-s');
+  }
+  
+  if (args.includes('--no-search') || args.includes('-n')) {
+    noSearch = true;
+    commandArgs = args.filter(arg => arg !== '--no-search' && arg !== '-n');
+  }
+  
+  if (commandArgs.length === 0) {
+    console.error('Usage: ai.ts [--search|-s] [--no-search|-n] <command>');
+    console.error('  --search, -s     Force web search');
+    console.error('  --no-search, -n  Disable web search');
     process.exit(1);
   }
-  const command = args.join(' ');
+  
+  const command = commandArgs.join(' ');
 
   // Get API key from environment variable
   const apiKey = process.env.OPENROUTER_API_KEY;
@@ -18,6 +89,12 @@ async function main() {
 
   // Get model from environment variable or use default
   const model = process.env.AI_MODEL || 'openai/o3';
+  
+  // Determine if we should use web search
+  const useWebSearch = shouldUseWebSearch(command, forceSearch, noSearch);
+  
+  // Modify model name if web search is needed
+  const finalModel = useWebSearch && !model.includes(':online') ? `${model}:online` : model;
 
   // Get system prompt from environment variable
   const systemPrompt = process.env.AI_SYSTEM_PROMPT;
@@ -29,22 +106,40 @@ async function main() {
   }
   messages.push({ role: 'user', content: command });
 
+  // Build request body
+  const requestBody: any = {
+    model: finalModel,
+    messages: messages,
+    stream: true,
+  };
+  
+  // Add custom web search configuration if using web search
+  if (useWebSearch && process.env.AI_WEB_SEARCH_MAX_RESULTS) {
+    requestBody.plugins = [{
+      id: 'web',
+      max_results: parseInt(process.env.AI_WEB_SEARCH_MAX_RESULTS, 10)
+    }];
+  }
+
   try {
+    // Debug logging if verbose mode is enabled
+    if (process.env.AI_VERBOSE === 'true') {
+      console.error(`[AI] Using model: ${finalModel}`);
+      console.error(`[AI] Web search: ${useWebSearch ? 'enabled' : 'disabled'}`);
+    }
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: model,
-        messages: messages,
-        stream: true,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
 
     const reader = response.body?.getReader();

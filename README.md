@@ -10,6 +10,7 @@ A TypeScript-based command line tool that uses OpenRouter's API to get AI respon
 - ⚡ ZSH widget for natural language commands
 - 📦 Easy global installation via npm
 - 🔧 No external HTTP dependencies - uses native fetch
+- 🔍 Smart web search integration with automatic detection
 
 ## Requirements
 
@@ -67,6 +68,24 @@ Basic usage:
 ai "How do I list files sorted by size?"
 ```
 
+With web search (automatically detected for queries needing current info):
+```bash
+ai "What's the latest news about AI?"
+ai "What's the current stock price of AAPL?"
+```
+
+Force web search:
+```bash
+ai --search "Python documentation"
+ai -s "Best practices for TypeScript"
+```
+
+Disable web search:
+```bash
+ai --no-search "What is the weather today?"
+ai -n "Tell me about recent events"
+```
+
 The command will stream the AI's response directly to stdout.
 
 ## Configuration
@@ -75,6 +94,8 @@ Environment variables:
 - `OPENROUTER_API_KEY` (required): Your OpenRouter API key
 - `AI_MODEL` (optional): The model to use (default: `openai/o3`)
 - `AI_SYSTEM_PROMPT` (optional): System prompt to prepend to messages
+- `AI_WEB_SEARCH_MAX_RESULTS` (optional): Max web search results (default: 5)
+- `AI_VERBOSE` (optional): Set to `true` for debug logging
 
 Example with custom model and system prompt:
 ```bash
@@ -82,6 +103,24 @@ export AI_MODEL="openai/gpt-4o"
 export AI_SYSTEM_PROMPT="You are a helpful coding assistant."
 ai "explain what a python decorator is"
 ```
+
+## Web Search
+
+The tool intelligently detects when web search would be helpful based on your query. It automatically enables web search for:
+
+- Queries with temporal keywords: "latest", "recent", "current", "today", "news", "2024", "2025"
+- Real-time information: "price", "stock", "weather", "score", "status", "live"
+- Current events: "released", "announced", "trending", "happening", "breaking"
+
+Web search is automatically disabled for:
+- Simple greetings: "hi", "hello", "thanks"
+- Code-related tasks: "help me write", "code", "implement", "fix", "debug"
+
+You can always override the automatic detection:
+- Use `--search` or `-s` to force web search
+- Use `--no-search` or `-n` to disable web search
+
+Web search costs $0.02 per request (5 results) and is powered by [Exa](https://exa.ai).
 
 ## ZSH Widget
 

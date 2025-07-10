@@ -54,6 +54,8 @@ Required environment variables:
 Optional environment variables:
 - `AI_MODEL` - AI model to use (default: "openai/o3")
 - `AI_SYSTEM_PROMPT` - System prompt to prepend to messages
+- `AI_WEB_SEARCH_MAX_RESULTS` - Maximum web search results (default: 5, range: 1-10)
+- `AI_VERBOSE` - Enable debug logging when set to "true"
 
 ## Key Implementation Details
 
@@ -64,10 +66,22 @@ The application processes streaming responses using:
 - JSON parsing of data events
 - Proper cleanup with reader.cancel()
 
+### Web Search Integration
+The tool includes intelligent web search detection:
+- Automatically detects queries needing current information
+- Keywords-based detection with three categories:
+  - Web search triggers: "latest", "news", "current", "price", etc.
+  - No-search keywords: "hi", "hello", "code", "implement", etc.
+  - Info queries: evaluated based on context
+- Manual override with `--search`/`-s` and `--no-search`/`-n` flags
+- Appends `:online` to model name when web search is needed
+- Configurable max results via `AI_WEB_SEARCH_MAX_RESULTS`
+
 ### Error Handling
 - Validates required environment variables
 - Handles HTTP errors with status codes
 - Graceful handling of malformed JSON in SSE stream
+- Enhanced error messages include response body for debugging
 
 ### Node.js Requirements
 - Minimum version: Node.js 18
@@ -81,6 +95,16 @@ Since there's no test suite, manually test by:
 ```bash
 export OPENROUTER_API_KEY="your-key"
 ./ai "test prompt"
+
+# Test web search detection
+./ai "What's the latest news?"  # Should auto-enable web search
+./ai "Hi there"  # Should NOT use web search
+./ai --search "Python documentation"  # Force web search
+./ai --no-search "Current weather"  # Disable web search
+
+# Test with verbose mode
+export AI_VERBOSE=true
+./ai "test prompt"  # Will show model and web search status
 ```
 
 ### Adding New Environment Variables
