@@ -104,12 +104,26 @@ async function main() {
 
   // Get system prompt from environment variable
   const systemPrompt = process.env.AI_SYSTEM_PROMPT;
+  
+  // Get current date
+  const currentDate = new Date().toLocaleDateString('en-US', { 
+    weekday: 'long',
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
 
   // Build messages array
   const messages: Array<{ role: string; content: string }> = [];
+  
+  // Always include date in system prompt (date comes first)
+  const datePrompt = `Today's date is ${currentDate}.`;
   if (systemPrompt) {
-    messages.push({ role: 'system', content: systemPrompt });
+    messages.push({ role: 'system', content: `${datePrompt}\n\n${systemPrompt}` });
+  } else {
+    messages.push({ role: 'system', content: datePrompt });
   }
+  
   messages.push({ role: 'user', content: command });
 
   // Build request body
@@ -126,7 +140,7 @@ async function main() {
       : 5;
     
     // Custom search prompt that asks for clean answers without inline citations
-    const currentDate = new Date().toLocaleDateString('en-US', { 
+    const searchDate = new Date().toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
@@ -135,7 +149,7 @@ async function main() {
     requestBody.plugins = [{
       id: 'web',
       max_results: maxResults,
-      search_prompt: `A web search was conducted on ${currentDate}. Use the following web search results to answer the user's question.
+      search_prompt: `A web search was conducted on ${searchDate}. Use the following web search results to answer the user's question.
 
 IMPORTANT: Do NOT include URLs or citations in your answer. Just provide a clean, natural response based on the information found. The sources will be displayed separately.`
     }];
@@ -146,6 +160,9 @@ IMPORTANT: Do NOT include URLs or citations in your answer. Just provide a clean
     if (process.env.AI_VERBOSE === 'true') {
       console.error(`[AI] Using model: ${finalModel}`);
       console.error(`[AI] Web search: ${useWebSearch ? 'enabled' : 'disabled'}`);
+      if (useWebSearch) {
+        console.error(`[AI] Max search results: ${process.env.AI_WEB_SEARCH_MAX_RESULTS || '5'}`);
+      }
     }
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
@@ -223,11 +240,19 @@ IMPORTANT: Do NOT include URLs or citations in your answer. Just provide a clean
                     const citation = annotation.url_citation;
                     // Check if we already have this URL
                     if (!citations.some(c => c.url === citation.url)) {
-                      citations.push({
+                      const newCitation = {
                         url: citation.url,
                         title: citation.title || 'Untitled',
                         content: citation.content
-                      });
+                      };
+                      citations.push(newCitation);
+                      
+                      // Debug: print web search results if verbose mode is on
+                      if (process.env.AI_VERBOSE === 'true' && citation.content) {
+                        console.error(`\n[AI] Web search result from ${citation.url}:`);
+                        console.error(`[AI] Title: ${citation.title || 'Untitled'}`);
+                        console.error(`[AI] Content preview: ${citation.content.substring(0, 200)}...`);
+                      }
                     }
                   }
                 });
