@@ -92,7 +92,7 @@ The command will stream the AI's response directly to stdout.
 
 Environment variables:
 - `OPENROUTER_API_KEY` (required): Your OpenRouter API key
-- `AI_MODEL` (optional): The model to use (default: `openai/o3`)
+- `AI_MODEL` (optional): The model to use (default: `openai/gpt-4.1-mini`)
 - `AI_SYSTEM_PROMPT` (optional): System prompt to prepend to messages
 - `AI_WEB_SEARCH_MAX_RESULTS` (optional): Max web search results (default: 5)
 - `AI_VERBOSE` (optional): Set to `true` for debug logging

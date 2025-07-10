@@ -94,7 +94,7 @@ async function main() {
   }
 
   // Get model from environment variable or use default
-  const model = process.env.AI_MODEL || 'openai/o3';
+  const model = process.env.AI_MODEL || 'openai/gpt-4.1-mini';
   
   // Determine if we should use web search
   const useWebSearch = shouldUseWebSearch(command, forceSearch, noSearch);

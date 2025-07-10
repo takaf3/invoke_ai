@@ -52,7 +52,7 @@ Required environment variables:
 - `OPENROUTER_API_KEY` - API key for OpenRouter service
 
 Optional environment variables:
-- `AI_MODEL` - AI model to use (default: "openai/o3")
+- `AI_MODEL` - AI model to use (default: "openai/gpt-4.1-mini")
 - `AI_SYSTEM_PROMPT` - System prompt to prepend to messages
 - `AI_WEB_SEARCH_MAX_RESULTS` - Maximum web search results (default: 5, range: 1-10)
 - `AI_VERBOSE` - Enable debug logging when set to "true"
