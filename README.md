@@ -143,13 +143,6 @@ And it will automatically be converted to:
 ai "How do I list files in reverse order by modification time?"
 ```
 
-## Security Note
-
-**Never commit your API key!** Always use environment variables:
-- Set `OPENROUTER_API_KEY` in your shell profile
-- Or use a `.env` file (already in .gitignore)
-- Never hardcode API keys in the source code
-
 ## Uninstall
 
 To uninstall:
