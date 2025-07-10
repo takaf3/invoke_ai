@@ -10,5 +10,19 @@ fi
 # Get the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# Run the TypeScript file with all arguments
-exec tsx "$DIR/ai.ts" "$@"
+# Check if ai.ts exists in the same directory (local install)
+if [ -f "$DIR/ai.ts" ]; then
+    exec tsx "$DIR/ai.ts" "$@"
+else
+    # For global npm install, the actual files are in lib/node_modules/invoke-ai/
+    # We need to go up from bin to lib/node_modules/invoke-ai/
+    GLOBAL_DIR="$(cd "$DIR/../lib/node_modules/invoke-ai" 2>/dev/null && pwd)"
+    if [ -f "$GLOBAL_DIR/ai.ts" ]; then
+        exec tsx "$GLOBAL_DIR/ai.ts" "$@"
+    else
+        echo "Error: Could not find ai.ts"
+        echo "DIR: $DIR"
+        echo "GLOBAL_DIR: $GLOBAL_DIR"
+        exit 1
+    fi
+fi
