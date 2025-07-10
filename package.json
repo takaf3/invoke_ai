@@ -34,6 +34,7 @@
     "global-uninstall": "npm uninstall -g invoke-ai"
   },
   "devDependencies": {
+    "@types/marked-terminal": "^6.1.1",
     "@types/node": "^20.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
@@ -47,5 +48,10 @@
   },
   "engines": {
     "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "marked": "^15.0.12",
+    "marked-terminal": "^7.3.0"
   }
 }
