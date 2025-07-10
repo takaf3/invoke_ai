@@ -1,0 +1,14 @@
+#!/bin/bash
+# Simple wrapper to run the TypeScript AI script
+
+# Check if tsx is installed
+if ! command -v tsx &> /dev/null; then
+    echo "tsx is not installed. Installing it globally..."
+    npm install -g tsx
+fi
+
+# Get the directory of this script
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# Run the TypeScript file with all arguments
+exec tsx "$DIR/ai.ts" "$@"

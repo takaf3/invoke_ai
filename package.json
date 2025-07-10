@@ -1,0 +1,51 @@
+{
+  "name": "invoke-ai",
+  "version": "1.0.0",
+  "description": "AI command line tool using OpenRouter API",
+  "main": "ai.ts",
+  "author": "Takafumi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/takaf3/invoke_ai.git"
+  },
+  "keywords": [
+    "ai",
+    "cli",
+    "openrouter",
+    "typescript",
+    "command-line",
+    "gpt",
+    "streaming"
+  ],
+  "bin": {
+    "ai": "./ai"
+  },
+  "scripts": {
+    "start": "tsx ai.ts",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "format": "prettier --write \"**/*.{ts,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,json,md}\"",
+    "typecheck": "tsc --noEmit",
+    "global-install": "npm install -g .",
+    "global-uninstall": "npm uninstall -g invoke-ai"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.2.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

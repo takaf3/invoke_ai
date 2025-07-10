@@ -1,0 +1,39 @@
+# Keep TypeScript files since we use tsx directly
+# Test files
+*.test.ts
+*.spec.ts
+__tests__/
+coverage/
+.nyc_output/
+
+# Configuration files (not needed in npm package)
+.eslintrc*
+.prettierrc*
+.prettierignore
+tsconfig.json
+vitest.config.*
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git files
+.git/
+.gitignore
+
+# Documentation files that aren't needed in npm package
+CLAUDE.md
+
+# Logs and temp files
+*.log
+logs/
+*.tmp
+*.temp
+.cache/
+
+# OS files
+.DS_Store
+Thumbs.db
