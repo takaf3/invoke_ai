@@ -51,6 +51,12 @@ function shouldUseWebSearch(command: string, forceSearch?: boolean, noSearch?: b
   return false;
 }
 
+interface Citation {
+  url: string;
+  title: string;
+  content?: string;
+}
+
 async function main() {
   // Parse command line arguments
   const args = process.argv.slice(2);
@@ -114,10 +120,24 @@ async function main() {
   };
   
   // Add custom web search configuration if using web search
-  if (useWebSearch && process.env.AI_WEB_SEARCH_MAX_RESULTS) {
+  if (useWebSearch) {
+    const maxResults = process.env.AI_WEB_SEARCH_MAX_RESULTS 
+      ? parseInt(process.env.AI_WEB_SEARCH_MAX_RESULTS, 10) 
+      : 5;
+    
+    // Custom search prompt that asks for clean answers without inline citations
+    const currentDate = new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    
     requestBody.plugins = [{
       id: 'web',
-      max_results: parseInt(process.env.AI_WEB_SEARCH_MAX_RESULTS, 10)
+      max_results: maxResults,
+      search_prompt: `A web search was conducted on ${currentDate}. Use the following web search results to answer the user's question.
+
+IMPORTANT: Do NOT include URLs or citations in your answer. Just provide a clean, natural response based on the information found. The sources will be displayed separately.`
     }];
   }
 
@@ -149,6 +169,8 @@ async function main() {
 
     const decoder = new TextDecoder();
     let buffer = '';
+    let fullContent = '';
+    const citations: Citation[] = [];
 
     try {
       while (true) {
@@ -170,6 +192,16 @@ async function main() {
             const data = line.slice(6);
             if (data === '[DONE]') {
               console.log(); // Print newline at the end
+              
+              // Display citations if any were found
+              if (citations.length > 0) {
+                console.log('\n---\nSources:');
+                citations.forEach((citation, index) => {
+                  console.log(`[${index + 1}] ${citation.title}`);
+                  console.log(`    ${citation.url}`);
+                });
+              }
+              
               return;
             }
 
@@ -178,6 +210,27 @@ async function main() {
               const content = parsed.choices?.[0]?.delta?.content;
               if (content) {
                 process.stdout.write(content);
+                fullContent += content;
+              }
+              
+              // Check for annotations in the response
+              const annotations = parsed.choices?.[0]?.delta?.annotations || 
+                                parsed.choices?.[0]?.message?.annotations;
+              
+              if (annotations && Array.isArray(annotations)) {
+                annotations.forEach((annotation: any) => {
+                  if (annotation.type === 'url_citation' && annotation.url_citation) {
+                    const citation = annotation.url_citation;
+                    // Check if we already have this URL
+                    if (!citations.some(c => c.url === citation.url)) {
+                      citations.push({
+                        url: citation.url,
+                        title: citation.title || 'Untitled',
+                        content: citation.content
+                      });
+                    }
+                  }
+                });
               }
             } catch (e) {
               // Ignore invalid JSON
